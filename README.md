@@ -2,6 +2,8 @@
 
 A 2D space-shooter built with **Phaser 3**, **TypeScript**, **Vite** and **Vitest**.
 
+![Gameplay Screenshot](./bba_screenshot.png)
+
 Fly an F-35 stealth fighter against waves of Independence-Day-style alien saucers,
 dodge procedurally generated asteroid obstacles, and survive long enough to face the
 **Mothership** boss that appears after 30 seconds.
