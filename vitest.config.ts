@@ -11,5 +11,17 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'istanbul',
+      include: [
+        'src/main.ts',
+        'src/config/*.ts',
+        'src/entities/*.ts',
+        'src/scenes/*.ts',
+        'src/utils/*.ts',
+      ],
+      exclude: ['src/**/*.test.ts'],
+      reporter: ['text'],
+    },
   },
 });
