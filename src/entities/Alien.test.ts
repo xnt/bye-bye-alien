@@ -93,11 +93,11 @@ describe('Alien', () => {
     });
 
     it('should move leftward at ALIEN_SPEED', () => {
-      expect(alien.body.velocity.x).toBe(-ALIEN_SPEED);
+      expect(alien.body!.velocity.x).toBe(-ALIEN_SPEED);
     });
 
     it('should have non-zero vertical drift', () => {
-      expect(alien.body.velocity.y).not.toBe(0);
+      expect(alien.body!.velocity.y).not.toBe(0);
     });
   });
 
@@ -134,23 +134,23 @@ describe('Alien', () => {
   describe('update', () => {
     it('should bounce off top edge (y < 30)', () => {
       alien.y = 20;
-      alien.body.velocity.y = -40;
+      alien.body!.velocity.y = -40;
       alien.update(0, 16);
-      expect(alien.body.velocity.y).toBe(40);
+      expect(alien.body!.velocity.y).toBe(40);
     });
 
     it('should bounce off bottom edge (y > GAME_HEIGHT - 30)', () => {
       alien.y = GAME_HEIGHT - 10;
-      alien.body.velocity.y = 40;
+      alien.body!.velocity.y = 40;
       alien.update(0, 16);
-      expect(alien.body.velocity.y).toBe(-40);
+      expect(alien.body!.velocity.y).toBe(-40);
     });
 
     it('should not bounce when within bounds', () => {
       alien.y = 300;
-      alien.body.velocity.y = 40;
+      alien.body!.velocity.y = 40;
       alien.update(0, 16);
-      expect(alien.body.velocity.y).toBe(40);
+      expect(alien.body!.velocity.y).toBe(40);
     });
 
     it('should destroy when past left edge (x < -50)', () => {

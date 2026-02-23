@@ -172,59 +172,59 @@ describe('Player', () => {
     it('should move left when left cursor is pressed', () => {
       helpers.cursors.left.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.x).toBe(-speed);
+      expect(player.body!.velocity.x).toBe(-speed);
     });
 
     it('should move left when A key is pressed', () => {
       helpers.wasd.A.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.x).toBe(-speed);
+      expect(player.body!.velocity.x).toBe(-speed);
     });
 
     it('should move right when right cursor is pressed', () => {
       helpers.cursors.right.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.x).toBe(speed);
+      expect(player.body!.velocity.x).toBe(speed);
     });
 
     it('should move right when D key is pressed', () => {
       helpers.wasd.D.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.x).toBe(speed);
+      expect(player.body!.velocity.x).toBe(speed);
     });
 
     it('should stop horizontal movement when no key pressed', () => {
       player.update(0, 16);
-      expect(player.body.velocity.x).toBe(0);
+      expect(player.body!.velocity.x).toBe(0);
     });
 
     it('should move up when up cursor is pressed', () => {
       helpers.cursors.up.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.y).toBe(-speed);
+      expect(player.body!.velocity.y).toBe(-speed);
     });
 
     it('should move up when W key is pressed', () => {
       helpers.wasd.W.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.y).toBe(-speed);
+      expect(player.body!.velocity.y).toBe(-speed);
     });
 
     it('should move down when down cursor is pressed', () => {
       helpers.cursors.down.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.y).toBe(speed);
+      expect(player.body!.velocity.y).toBe(speed);
     });
 
     it('should move down when S key is pressed', () => {
       helpers.wasd.S.isDown = true;
       player.update(0, 16);
-      expect(player.body.velocity.y).toBe(speed);
+      expect(player.body!.velocity.y).toBe(speed);
     });
 
     it('should stop vertical movement when no key pressed', () => {
       player.update(0, 16);
-      expect(player.body.velocity.y).toBe(0);
+      expect(player.body!.velocity.y).toBe(0);
     });
   });
 

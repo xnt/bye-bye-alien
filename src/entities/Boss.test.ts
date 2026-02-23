@@ -98,7 +98,7 @@ describe('Boss', () => {
     });
 
     it('should slide in from the right', () => {
-      expect(boss.body.velocity.x).toBe(-BOSS_SPEED);
+      expect(boss.body!.velocity.x).toBe(-BOSS_SPEED);
     });
   });
 
@@ -137,14 +137,14 @@ describe('Boss', () => {
       boss.x = 700;
       boss.update(0, 16);
       // Still sliding in — velocity unchanged
-      expect(boss.body.velocity.x).toBe(-BOSS_SPEED);
+      expect(boss.body!.velocity.x).toBe(-BOSS_SPEED);
     });
 
     it('should arrive when x <= targetX', () => {
       boss.x = 680;
       boss.update(0, 16);
-      expect(boss.body.velocity.x).toBe(0);
-      expect(boss.body.velocity.y).toBe(BOSS_SPEED); // moveDir starts at 1
+      expect(boss.body!.velocity.x).toBe(0);
+      expect(boss.body!.velocity.y).toBe(BOSS_SPEED); // moveDir starts at 1
     });
 
     it('should bounce off top edge when patrolling', () => {
@@ -155,7 +155,7 @@ describe('Boss', () => {
       // Hit the top
       boss.y = 70;
       boss.update(100, 16);
-      expect(boss.body.velocity.y).toBe(BOSS_SPEED);
+      expect(boss.body!.velocity.y).toBe(BOSS_SPEED);
     });
 
     it('should bounce off bottom edge when patrolling', () => {
@@ -164,7 +164,7 @@ describe('Boss', () => {
 
       boss.y = GAME_HEIGHT - 70;
       boss.update(100, 16);
-      expect(boss.body.velocity.y).toBe(-BOSS_SPEED);
+      expect(boss.body!.velocity.y).toBe(-BOSS_SPEED);
     });
   });
 
