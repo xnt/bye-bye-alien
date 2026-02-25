@@ -5,14 +5,18 @@ import { ShipStats } from '../config/ships';
 export class Player extends Phaser.Physics.Arcade.Sprite {
   public stats: ShipStats;
   public currentHp: number;
+  public poweredUp = false;
+  private baseStats: ShipStats;
   private lastFired = 0;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   public bullets!: Phaser.Physics.Arcade.Group;
+  private baseBullets!: Phaser.Physics.Arcade.Group;
 
   constructor(scene: Phaser.Scene, x: number, y: number, stats: ShipStats) {
-    super(scene, x, y, 'f35');
+    super(scene, x, y, stats.textureKey);
     this.stats = stats;
+    this.baseStats = stats;
     this.currentHp = stats.hp;
 
     scene.add.existing(this);
@@ -21,7 +25,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setDepth(10);
 
-    // Scale the F-35 down a bit so it feels right
+    // Scale down a bit so it feels right
     this.setScale(0.8);
 
     // Rotate to face right (flying left → right)
@@ -38,12 +42,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       };
     }
 
-    // Bullet pool
+    // Bullet pool — use the ship-specific bullet texture
     this.bullets = scene.physics.add.group({
-      defaultKey: 'bullet_player',
+      defaultKey: stats.bulletTextureKey,
       maxSize: 30,
       runChildUpdate: true,
     });
+    this.baseBullets = this.bullets;
   }
 
   update(time: number, _delta: number): void {
@@ -104,5 +109,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   isDead(): boolean {
     return this.currentHp <= 0;
+  }
+
+  /* ---- Power-up ---- */
+
+  activatePowerUp(powerStats: ShipStats): void {
+    this.poweredUp = true;
+    this.stats = powerStats;
+    this.currentHp = powerStats.hp;
+    this.setTexture(powerStats.textureKey);
+
+    // Create a separate bullet pool for power-up bullets
+    this.bullets = this.scene.physics.add.group({
+      defaultKey: powerStats.bulletTextureKey,
+      maxSize: 40,
+      runChildUpdate: true,
+    });
+  }
+
+  deactivatePowerUp(): void {
+    this.poweredUp = false;
+    this.stats = this.baseStats;
+    this.currentHp = this.baseStats.hp;
+    this.setTexture(this.baseStats.textureKey);
+
+    // Restore original bullet pool
+    this.bullets = this.baseBullets;
   }
 }

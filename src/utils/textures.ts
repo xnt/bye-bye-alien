@@ -12,8 +12,24 @@ function gfx(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
  * Each function draws onto a Phaser Graphics object, then saves as a texture.
  */
 export function generateTextures(scene: Phaser.Scene): void {
+  // Player ships
   generateF35(scene);
-  generatePlayerBullet(scene);
+  generateValkyrie(scene);
+  generateTitan(scene);
+  generateSpectre(scene);
+
+  // Player bullets (one per ship)
+  generateBulletF35(scene);
+  generateBulletValkyrie(scene);
+  generateBulletTitan(scene);
+  generateBulletSpectre(scene);
+
+  // Power-up
+  generatePowerUpPickup(scene);
+  generatePowerUpDisguise(scene);
+  generateBulletPowerUp(scene);
+
+  // Enemies & environment
   generateAlien(scene);
   generateAlienBullet(scene);
   generateBoss(scene);
@@ -67,15 +83,296 @@ function generateF35(scene: Phaser.Scene): void {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Player bullet — small bright horizontal projectile, 10×4          */
+/*  Valkyrie — sleek swept-wing interceptor, 32×32                    */
 /* ------------------------------------------------------------------ */
-function generatePlayerBullet(scene: Phaser.Scene): void {
+function generateValkyrie(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  const s = 2;
+
+  // Slim fuselage (light blue-grey)
+  g.fillStyle(0x8899aa);
+  g.fillRect(15 * s, 2 * s, 2 * s, 24 * s);
+
+  // Nose — sharp point
+  g.fillStyle(0x99aacc);
+  g.fillRect(15 * s, 0, 2 * s, 3 * s);
+  g.fillRect(15.5 * s, 0, 1 * s, 1 * s);
+
+  // Swept-back delta wings
+  g.fillStyle(0x7788aa);
+  g.fillRect(8 * s, 14 * s, 16 * s, 2 * s);
+  g.fillRect(5 * s, 15 * s, 6 * s, 2 * s);
+  g.fillRect(21 * s, 15 * s, 6 * s, 2 * s);
+  g.fillRect(3 * s, 16 * s, 4 * s, 1 * s);
+  g.fillRect(25 * s, 16 * s, 4 * s, 1 * s);
+
+  // Canards (small forward wings)
+  g.fillStyle(0x8899bb);
+  g.fillRect(11 * s, 7 * s, 10 * s, 1 * s);
+
+  // Tail fins
+  g.fillStyle(0x667799);
+  g.fillRect(12 * s, 24 * s, 2 * s, 3 * s);
+  g.fillRect(18 * s, 24 * s, 2 * s, 3 * s);
+
+  // Twin engine glow (cyan)
+  g.fillStyle(0x00eeff);
+  g.fillRect(14 * s, 26 * s, 1 * s, 2 * s);
+  g.fillRect(17 * s, 26 * s, 1 * s, 2 * s);
+
+  // Cockpit
+  g.fillStyle(0xbbddff);
+  g.fillRect(15 * s, 5 * s, 2 * s, 2 * s);
+
+  g.generateTexture('valkyrie', 32 * s, 32 * s);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Titan — heavy armoured gunship, 32×32                             */
+/* ------------------------------------------------------------------ */
+function generateTitan(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  const s = 2;
+
+  // Wide, heavy fuselage (dark olive/grey)
+  g.fillStyle(0x556655);
+  g.fillRect(10 * s, 4 * s, 12 * s, 24 * s);
+
+  // Reinforced armour plating
+  g.fillStyle(0x4a5a4a);
+  g.fillRect(11 * s, 6 * s, 10 * s, 20 * s);
+
+  // Blunt nose
+  g.fillStyle(0x667766);
+  g.fillRect(12 * s, 2 * s, 8 * s, 4 * s);
+
+  // Thick stubby wings
+  g.fillStyle(0x505f50);
+  g.fillRect(4 * s, 12 * s, 24 * s, 4 * s);
+  g.fillRect(2 * s, 13 * s, 4 * s, 3 * s);
+  g.fillRect(26 * s, 13 * s, 4 * s, 3 * s);
+
+  // Wing-mounted cannons
+  g.fillStyle(0x444444);
+  g.fillRect(3 * s, 10 * s, 2 * s, 6 * s);
+  g.fillRect(27 * s, 10 * s, 2 * s, 6 * s);
+  // Cannon tips (orange glow)
+  g.fillStyle(0xff8800);
+  g.fillRect(3 * s, 10 * s, 2 * s, 1 * s);
+  g.fillRect(27 * s, 10 * s, 2 * s, 1 * s);
+
+  // Tail section
+  g.fillStyle(0x4a5a4a);
+  g.fillRect(8 * s, 25 * s, 16 * s, 3 * s);
+
+  // Big engine glow (orange-red)
+  g.fillStyle(0xff6600);
+  g.fillRect(12 * s, 27 * s, 8 * s, 3 * s);
+  g.fillStyle(0xffaa44);
+  g.fillRect(14 * s, 28 * s, 4 * s, 2 * s);
+
+  // Cockpit (small, armoured)
+  g.fillStyle(0x99bb99);
+  g.fillRect(14 * s, 5 * s, 4 * s, 2 * s);
+
+  g.generateTexture('titan', 32 * s, 32 * s);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spectre — angular stealth striker, 32×32                          */
+/* ------------------------------------------------------------------ */
+function generateSpectre(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  const s = 2;
+
+  // Angular fuselage (very dark blue-grey)
+  g.fillStyle(0x334455);
+  g.fillRect(13 * s, 3 * s, 6 * s, 22 * s);
+
+  // Faceted nose (stealth angles)
+  g.fillStyle(0x3d4f60);
+  g.fillRect(14 * s, 1 * s, 4 * s, 4 * s);
+  g.fillRect(15 * s, 0, 2 * s, 2 * s);
+
+  // Diamond wings (angular, bat-like)
+  g.fillStyle(0x2d3d4d);
+  g.fillRect(7 * s, 12 * s, 18 * s, 3 * s);
+  g.fillRect(4 * s, 13 * s, 6 * s, 3 * s);
+  g.fillRect(22 * s, 13 * s, 6 * s, 3 * s);
+  g.fillRect(2 * s, 15 * s, 4 * s, 2 * s);
+  g.fillRect(26 * s, 15 * s, 4 * s, 2 * s);
+
+  // Serrated trailing edge
+  g.fillStyle(0x253545);
+  g.fillRect(3 * s, 17 * s, 2 * s, 1 * s);
+  g.fillRect(27 * s, 17 * s, 2 * s, 1 * s);
+
+  // V-tail
+  g.fillStyle(0x2a3a4a);
+  g.fillRect(11 * s, 23 * s, 3 * s, 4 * s);
+  g.fillRect(18 * s, 23 * s, 3 * s, 4 * s);
+
+  // Hidden engine glow (dim purple — stealth)
+  g.fillStyle(0x8844cc);
+  g.fillRect(14 * s, 25 * s, 4 * s, 2 * s);
+
+  // Targeting sensor (cockpit — red tint)
+  g.fillStyle(0xff4466);
+  g.fillRect(15 * s, 5 * s, 2 * s, 2 * s);
+
+  g.generateTexture('spectre', 32 * s, 32 * s);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  F-35 bullet — cyan horizontal projectile, 10×4                    */
+/* ------------------------------------------------------------------ */
+function generateBulletF35(scene: Phaser.Scene): void {
   const g = gfx(scene);
   g.fillStyle(0x44eeff);
   g.fillRect(0, 1, 10, 2);
   g.fillStyle(0xffffff);
   g.fillRect(7, 1, 3, 2);
-  g.generateTexture('bullet_player', 10, 4);
+  g.generateTexture('bullet_f35', 10, 4);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Valkyrie bullet — rapid cyan-white needle, 8×2                    */
+/* ------------------------------------------------------------------ */
+function generateBulletValkyrie(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  g.fillStyle(0x00ccff);
+  g.fillRect(0, 0, 8, 2);
+  g.fillStyle(0xaaeeff);
+  g.fillRect(5, 0, 3, 2);
+  g.generateTexture('bullet_valkyrie', 8, 2);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Titan bullet — heavy orange bolt, 14×6                            */
+/* ------------------------------------------------------------------ */
+function generateBulletTitan(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  g.fillStyle(0xff6600);
+  g.fillRect(0, 1, 14, 4);
+  g.fillStyle(0xffaa44);
+  g.fillRect(2, 2, 10, 2);
+  g.fillStyle(0xffdd88);
+  g.fillRect(10, 2, 4, 2);
+  g.generateTexture('bullet_titan', 14, 6);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spectre bullet — long purple rail-shot, 16×3                      */
+/* ------------------------------------------------------------------ */
+function generateBulletSpectre(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  g.fillStyle(0x8844cc);
+  g.fillRect(0, 0, 16, 3);
+  g.fillStyle(0xbb66ff);
+  g.fillRect(4, 0, 8, 3);
+  g.fillStyle(0xeeccff);
+  g.fillRect(12, 0, 4, 3);
+  g.generateTexture('bullet_spectre', 16, 3);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Power-up pickup — small glowing UFO saucer, 24×16                 */
+/* ------------------------------------------------------------------ */
+function generatePowerUpPickup(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+
+  // Small disc body (same palette as alien, but smaller)
+  g.fillStyle(0x445566);
+  g.fillRect(4, 4, 16, 6);
+
+  // Wider rim
+  g.fillStyle(0x556677);
+  g.fillRect(2, 6, 20, 3);
+
+  // Mini dome — bright green to signal "pick me up"
+  g.fillStyle(0x66ffaa);
+  g.fillRect(8, 2, 8, 3);
+  g.fillStyle(0xaaffdd);
+  g.fillRect(10, 1, 4, 2);
+
+  // Pulsing underside glow (yellow-green to distinguish from enemies)
+  g.fillStyle(0xaaff44);
+  g.fillRect(6, 10, 3, 2);
+  g.fillRect(10, 11, 4, 2);
+  g.fillRect(15, 10, 3, 2);
+
+  // Side prongs
+  g.fillStyle(0x334455);
+  g.fillRect(0, 7, 3, 2);
+  g.fillRect(21, 7, 3, 2);
+
+  g.generateTexture('powerup_pickup', 24, 14);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Power-up disguise — player-as-UFO, saucer with blue cockpit glow  */
+/*  Similar to alien but with a bright blue dome + chevron marking     */
+/*  so the player can tell it apart, 32×32 at 2× scale                */
+/* ------------------------------------------------------------------ */
+function generatePowerUpDisguise(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  const s = 2;
+
+  // Main disc body (same alien palette)
+  g.fillStyle(0x445566);
+  g.fillRect(4 * s, 6 * s, 20 * s, 8 * s);
+
+  // Wider middle rim
+  g.fillStyle(0x556677);
+  g.fillRect(2 * s, 8 * s, 24 * s, 4 * s);
+
+  // Dome — bright BLUE instead of green to distinguish from enemies
+  g.fillStyle(0x4488ff);
+  g.fillRect(10 * s, 4 * s, 8 * s, 4 * s);
+  g.fillStyle(0x66aaff);
+  g.fillRect(12 * s, 3 * s, 4 * s, 2 * s);
+
+  // Chevron marking on hull (player identifier — enemies don't have this)
+  g.fillStyle(0x44eeff);
+  g.fillRect(13 * s, 10 * s, 2 * s, 1 * s);
+  g.fillRect(12 * s, 11 * s, 4 * s, 1 * s);
+  g.fillRect(11 * s, 12 * s, 6 * s, 1 * s);
+
+  // Glowing underside lights — blue instead of red
+  g.fillStyle(0x4488ff);
+  g.fillRect(6 * s, 13 * s, 2 * s, 1 * s);
+  g.fillRect(12 * s, 14 * s, 4 * s, 1 * s);
+  g.fillRect(20 * s, 13 * s, 2 * s, 1 * s);
+
+  // Side prongs
+  g.fillStyle(0x334455);
+  g.fillRect(0, 9 * s, 3 * s, 2 * s);
+  g.fillRect(25 * s, 9 * s, 3 * s, 2 * s);
+
+  g.generateTexture('powerup_disguise', 28 * s, 18 * s);
+  g.destroy();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Power-up bullet — bright green-white plasma bolt, 12×4            */
+/* ------------------------------------------------------------------ */
+function generateBulletPowerUp(scene: Phaser.Scene): void {
+  const g = gfx(scene);
+  g.fillStyle(0x44ff88);
+  g.fillRect(0, 1, 12, 2);
+  g.fillStyle(0xaaffcc);
+  g.fillRect(4, 0, 6, 4);
+  g.fillStyle(0xffffff);
+  g.fillRect(8, 1, 4, 2);
+  g.generateTexture('bullet_powerup', 12, 4);
   g.destroy();
 }
 

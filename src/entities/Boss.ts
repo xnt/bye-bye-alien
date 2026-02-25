@@ -57,19 +57,33 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
   fire(
     time: number,
     bulletGroup: Phaser.Physics.Arcade.Group,
+    target: { x: number; y: number },
   ): void {
     if (!this.arrived) return;
     if (time < this.lastFired + this.fireInterval) return;
 
-    // Fire spread of 3 bullets to the left
-    const offsets = [-20, 0, 20];
-    for (const oy of offsets) {
-      const bullet = bulletGroup.get(this.x - 40, this.y + oy) as Phaser.Physics.Arcade.Sprite | null;
+    const ox = this.x - 40;
+    const oy = this.y;
+    let dx = target.x - ox;
+    let dy = target.y - oy;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    dx /= len;
+    dy /= len;
+
+    const angles = this.hp <= this.maxHp * 0.5 ? [-0.25, 0, 0.25] : [0];
+
+    for (const a of angles) {
+      const cos = Math.cos(a);
+      const sin = Math.sin(a);
+      const vx = (dx * cos - dy * sin) * BOSS_BULLET_SPEED;
+      const vy = (dx * sin + dy * cos) * BOSS_BULLET_SPEED;
+
+      const bullet = bulletGroup.get(ox, oy) as Phaser.Physics.Arcade.Sprite | null;
       if (bullet) {
         bullet.setActive(true).setVisible(true);
         (bullet.body as Phaser.Physics.Arcade.Body).enable = true;
-        bullet.setPosition(this.x - 40, this.y + oy);
-        bullet.setVelocity(-BOSS_BULLET_SPEED, oy * 2);
+        bullet.setPosition(ox, oy);
+        bullet.setVelocity(vx, vy);
         this.scene.time.delayedCall(4000, () => {
           if (bullet.active) {
             bullet.setActive(false).setVisible(false);

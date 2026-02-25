@@ -20,3 +20,7 @@ export const BOSS_BULLET_SPEED = 200;
 export const OBSTACLE_COUNT = 8;
 export const OBSTACLE_MIN_SIZE = 20;
 export const OBSTACLE_MAX_SIZE = 60;
+
+export const POWERUP_SPAWN_TIME = 20_000; // ms until UFO power-up appears
+export const POWERUP_DURATION = 10_000;   // ms the power-up lasts
+export const POWERUP_SPEED = 80;          // drift speed (pixels / sec)

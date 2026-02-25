@@ -45,8 +45,9 @@ describe('generateTextures', () => {
     generateTextures(helpers.scene as any);
   });
 
-  it('should create 9 graphics contexts (one per texture)', () => {
-    expect(helpers.scene.add.graphics).toHaveBeenCalledTimes(9);
+  it('should create 18 graphics contexts (one per texture)', () => {
+    // 4 ships + 4 ship bullets + 3 power-up + alien + alien_bullet + boss + boss_bullet + obstacle + star + explosion
+    expect(helpers.scene.add.graphics).toHaveBeenCalledTimes(18);
   });
 
   it('should hide every graphics context', () => {
@@ -64,7 +65,16 @@ describe('generateTextures', () => {
   it('should generate all expected texture keys', () => {
     const expectedKeys = [
       'f35',
-      'bullet_player',
+      'valkyrie',
+      'titan',
+      'spectre',
+      'bullet_f35',
+      'bullet_valkyrie',
+      'bullet_titan',
+      'bullet_spectre',
+      'powerup_pickup',
+      'powerup_disguise',
+      'bullet_powerup',
       'alien',
       'bullet_alien',
       'boss',
@@ -96,11 +106,21 @@ describe('generateTextures', () => {
     expect(f35.generateTexture).toHaveBeenCalledWith('f35', 64, 64);
   });
 
-  it('should generate bullet_player at 10×4', () => {
+  it('should generate bullet_f35 at 10×4', () => {
     const bp = helpers.graphicsInstances.find(
-      (g) => g.generateTexture.mock.calls[0][0] === 'bullet_player',
+      (g) => g.generateTexture.mock.calls[0][0] === 'bullet_f35',
     );
-    expect(bp.generateTexture).toHaveBeenCalledWith('bullet_player', 10, 4);
+    expect(bp.generateTexture).toHaveBeenCalledWith('bullet_f35', 10, 4);
+  });
+
+  it('should generate all ship textures at 64×64', () => {
+    for (const key of ['f35', 'valkyrie', 'titan', 'spectre']) {
+      const ship = helpers.graphicsInstances.find(
+        (g) => g.generateTexture.mock.calls[0][0] === key,
+      );
+      expect(ship).toBeDefined();
+      expect(ship.generateTexture).toHaveBeenCalledWith(key, 64, 64);
+    }
   });
 
   it('should generate alien at 56×36 (28*2 × 18*2)', () => {

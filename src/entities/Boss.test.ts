@@ -184,6 +184,8 @@ describe('Boss', () => {
     const interval = 1000 / BOSS_FIRE_RATE;
     const t1 = interval + 1;
 
+    const target = { x: 400, y: 300 };
+
     function triggerArrival(b: Boss) {
       b.x = 680;
       b.update(0, 16);
@@ -191,59 +193,75 @@ describe('Boss', () => {
 
     it('should not fire before arrival', () => {
       boss.x = 800; // still entering
-      boss.fire(t1, bulletGroup);
+      boss.fire(t1, bulletGroup, target as any);
       expect(bulletGroup.get).not.toHaveBeenCalled();
     });
 
-    it('should fire 3 bullets after arrival', () => {
+    it('should fire 1 bullet after arrival at full HP', () => {
       triggerArrival(boss);
-      boss.fire(t1, bulletGroup);
+      boss.fire(t1, bulletGroup, target as any);
+      expect(bulletGroup.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fire 3 bullets after arrival when below 50% HP', () => {
+      triggerArrival(boss);
+      boss.hp = Math.floor(BOSS_HP * 0.5);
+      boss.fire(t1, bulletGroup, target as any);
       expect(bulletGroup.get).toHaveBeenCalledTimes(3);
     });
 
     it('should not fire again before fireInterval', () => {
       triggerArrival(boss);
-      boss.fire(t1, bulletGroup);
-      boss.fire(t1 + 100, bulletGroup); // too soon
-      expect(bulletGroup.get).toHaveBeenCalledTimes(3); // still only the first salvo
+      boss.fire(t1, bulletGroup, target as any);
+      boss.fire(t1 + 100, bulletGroup, target as any); // too soon
+      expect(bulletGroup.get).toHaveBeenCalledTimes(1); // still only the first shot
     });
 
     it('should fire again after fireInterval', () => {
       triggerArrival(boss);
-      boss.fire(t1, bulletGroup);
+      boss.fire(t1, bulletGroup, target as any);
       // Reset bullet supplier
       let idx2 = 0;
       const moreBullets = [mockBullet(), mockBullet(), mockBullet()];
       bulletGroup.get.mockImplementation(() => moreBullets[idx2++]);
-      boss.fire(t1 + interval + 1, bulletGroup);
-      expect(bulletGroup.get).toHaveBeenCalledTimes(6); // 3 + 3
+      boss.fire(t1 + interval + 1, bulletGroup, target as any);
+      expect(bulletGroup.get).toHaveBeenCalledTimes(2); // 1 + 1 at full HP
     });
 
-    it('should fire bullets leftward with vertical spread', () => {
+    it('should aim bullets toward the target', () => {
       triggerArrival(boss);
-      boss.fire(t1, bulletGroup);
-
-      // Three bullets with offsets [-20, 0, 20] → velocity (-BOSS_BULLET_SPEED, oy*2)
-      expect(bullets[0].setVelocity).toHaveBeenCalledWith(-BOSS_BULLET_SPEED, -40);
-      expect(bullets[1].setVelocity).toHaveBeenCalledWith(-BOSS_BULLET_SPEED, 0);
-      expect(bullets[2].setVelocity).toHaveBeenCalledWith(-BOSS_BULLET_SPEED, 40);
+      boss.fire(t1, bulletGroup, target as any);
+      expect(bullets[0].setVelocity).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(Number),
+      );
     });
 
     it('should activate bullets and enable bodies', () => {
       triggerArrival(boss);
-      boss.fire(t1, bulletGroup);
+      boss.fire(t1, bulletGroup, target as any);
 
-      for (const b of bullets) {
-        expect(b.setActive).toHaveBeenCalledWith(true);
-        expect(b.setVisible).toHaveBeenCalledWith(true);
-        expect(b.body.enable).toBe(true);
-      }
+      // At full HP only the first bullet is used
+      const b = bullets[0];
+      expect(b.setActive).toHaveBeenCalledWith(true);
+      expect(b.setVisible).toHaveBeenCalledWith(true);
+      expect(b.body.enable).toBe(true);
     });
 
     it('should schedule auto-cleanup for each bullet', () => {
       triggerArrival(boss);
-      boss.fire(t1, bulletGroup);
-      // 3 bullets = 3 delayedCall invocations
+      boss.fire(t1, bulletGroup, target as any);
+      // 1 bullet = 1 delayedCall invocation at full HP
+      const delayCalls = scene.time.delayedCall.mock.calls.filter(
+        (c: any[]) => c[0] === 4000,
+      );
+      expect(delayCalls).toHaveLength(1);
+    });
+
+    it('should schedule auto-cleanup for spread bullets', () => {
+      triggerArrival(boss);
+      boss.hp = Math.floor(BOSS_HP * 0.5);
+      boss.fire(t1, bulletGroup, target as any);
       const delayCalls = scene.time.delayedCall.mock.calls.filter(
         (c: any[]) => c[0] === 4000,
       );
@@ -253,7 +271,7 @@ describe('Boss', () => {
     it('should handle null bullet from exhausted pool', () => {
       triggerArrival(boss);
       bulletGroup.get.mockReturnValue(null);
-      expect(() => boss.fire(t1 + interval + 2, bulletGroup)).not.toThrow();
+      expect(() => boss.fire(t1 + interval + 2, bulletGroup, target as any)).not.toThrow();
     });
   });
 });

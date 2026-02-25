@@ -3,7 +3,7 @@ import { generateTextures } from '../utils/textures';
 import { Player } from '../entities/Player';
 import { Alien } from '../entities/Alien';
 import { Boss } from '../entities/Boss';
-import { SHIPS } from '../config/ships';
+import { SHIPS, ShipKey, POWERUP_STATS } from '../config/ships';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
@@ -12,6 +12,9 @@ import {
   OBSTACLE_COUNT,
   OBSTACLE_MIN_SIZE,
   OBSTACLE_MAX_SIZE,
+  POWERUP_SPAWN_TIME,
+  POWERUP_DURATION,
+  POWERUP_SPEED,
 } from '../config/game';
 
 export class GameScene extends Phaser.Scene {
@@ -19,6 +22,7 @@ export class GameScene extends Phaser.Scene {
   private aliens!: Alien[];
   private boss: Boss | null = null;
   private bossSpawned = false;
+  private selectedShip: ShipKey = 'f35';
 
   // Bullet groups (enemy)
   private alienBullets!: Phaser.Physics.Arcade.Group;
@@ -42,8 +46,20 @@ export class GameScene extends Phaser.Scene {
   private alienTimer = 0;
   private gameOver = false;
 
+  // Power-up
+  private powerUp: Phaser.Physics.Arcade.Sprite | null = null;
+  private powerUpSpawned = false;
+  private powerUpActive = false;
+  private powerUpRemaining = 0;
+  private powerUpBar!: Phaser.GameObjects.Graphics;
+  private powerUpBullets: Phaser.Physics.Arcade.Group | null = null;
+
   constructor() {
     super({ key: 'GameScene' });
+  }
+
+  init(data: { ship?: ShipKey }): void {
+    this.selectedShip = data.ship ?? 'f35';
   }
 
   /* ---------------------------------------------------------------- */
@@ -59,6 +75,11 @@ export class GameScene extends Phaser.Scene {
     this.boss = null;
     this.aliens = [];
     this.bossWarningText = null;
+    this.powerUp = null;
+    this.powerUpSpawned = false;
+    this.powerUpActive = false;
+    this.powerUpRemaining = 0;
+    this.powerUpBullets = null;
 
     // Generate all textures (idempotent — only first time)
     if (!this.textures.exists('f35')) {
@@ -76,7 +97,7 @@ export class GameScene extends Phaser.Scene {
       this,
       80,
       GAME_HEIGHT / 2,
-      SHIPS.f35,
+      SHIPS[this.selectedShip],
     );
 
     // Enemy bullet pools
@@ -177,6 +198,38 @@ export class GameScene extends Phaser.Scene {
       );
     }
 
+    // Power-up spawn
+    if (!this.powerUpSpawned && !this.powerUpActive && this.elapsed >= POWERUP_SPAWN_TIME) {
+      this.spawnPowerUp();
+    }
+
+    // Power-up pickup — check overlap
+    const activePowerUp = this.powerUp && this.powerUp.active ? this.powerUp : null;
+    if (activePowerUp) {
+      this.physics.overlap(
+        this.player,
+        activePowerUp,
+        this.onPlayerCollectPowerUp as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+        undefined,
+        this,
+      );
+
+      // Despawn if it drifts off-screen (guard against pickup nulling it)
+      if (this.powerUp && this.powerUp.x < -40) {
+        this.powerUp.destroy();
+        this.powerUp = null;
+      }
+    }
+
+    // Power-up timer countdown
+    if (this.powerUpActive) {
+      this.powerUpRemaining -= delta;
+      this.updatePowerUpBar();
+      if (this.powerUpRemaining <= 0) {
+        this.deactivatePowerUp();
+      }
+    }
+
     // Boss spawn
     if (!this.bossSpawned && this.elapsed >= BOSS_SPAWN_TIME) {
       this.spawnBoss();
@@ -209,7 +262,7 @@ export class GameScene extends Phaser.Scene {
     // Update boss
     if (this.boss && this.boss.active) {
       this.boss.update(time, delta);
-      this.boss.fire(time, this.bossBullets);
+      this.boss.fire(time, this.bossBullets, { x: this.player.x, y: this.player.y });
 
       // Player bullets → boss
       this.physics.overlap(
@@ -293,6 +346,96 @@ export class GameScene extends Phaser.Scene {
 
     // Create boss HP bar
     this.bossHpBar = this.add.graphics().setDepth(100);
+  }
+
+  /* ---- Power-up ---- */
+
+  private spawnPowerUp(): void {
+    this.powerUpSpawned = true;
+    const y = Phaser.Math.Between(60, GAME_HEIGHT - 60);
+    this.powerUp = this.physics.add.sprite(GAME_WIDTH + 20, y, 'powerup_pickup');
+    this.powerUp.setVelocityX(-POWERUP_SPEED);
+    this.powerUp.setDepth(8);
+
+    // Gentle bobbing tween to attract attention
+    this.tweens.add({
+      targets: this.powerUp,
+      y: this.powerUp.y - 20,
+      yoyo: true,
+      repeat: -1,
+      duration: 600,
+      ease: 'Sine.easeInOut',
+    });
+  }
+
+  private onPlayerCollectPowerUp(
+    objA: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    objB: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ): void {
+    // Identify the power-up sprite (Phaser may swap argument order)
+    const pu = (objA instanceof Player ? objB : objA) as Phaser.Physics.Arcade.Sprite;
+    pu.destroy();
+    this.powerUp = null;
+    this.activatePowerUp();
+  }
+
+  private activatePowerUp(): void {
+    this.powerUpActive = true;
+    this.powerUpRemaining = POWERUP_DURATION;
+
+    this.player.activatePowerUp(POWERUP_STATS);
+
+    // Keep a reference to the power-up bullet pool for collision checks
+    this.powerUpBullets = this.player.bullets;
+
+    // Register power-up bullets → obstacles
+    this.physics.add.overlap(
+      this.powerUpBullets,
+      this.obstacles,
+      this.onBulletHitObstacle as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+      undefined,
+      this,
+    );
+
+    // Register power-up bullets → player overlap for alien/boss bullets is already
+    // done dynamically in update() via this.player.bullets
+
+    // Create HUD bar
+    this.powerUpBar = this.add.graphics().setDepth(100);
+  }
+
+  private deactivatePowerUp(): void {
+    this.powerUpActive = false;
+    this.powerUpRemaining = 0;
+    this.powerUpBullets = null;
+
+    this.player.deactivatePowerUp();
+
+    // Clean up HUD bar
+    if (this.powerUpBar) {
+      this.powerUpBar.destroy();
+    }
+  }
+
+  private updatePowerUpBar(): void {
+    if (!this.powerUpBar) return;
+    this.powerUpBar.clear();
+
+    const barW = 120;
+    const barH = 8;
+    const x = GAME_WIDTH / 2 - barW / 2;
+    const y = 10;
+    const ratio = Math.max(0, this.powerUpRemaining / POWERUP_DURATION);
+
+    // Background
+    this.powerUpBar.fillStyle(0x222233);
+    this.powerUpBar.fillRect(x, y, barW, barH);
+    // Foreground — green fading to yellow as time runs out
+    this.powerUpBar.fillStyle(ratio > 0.3 ? 0x44ff88 : 0xffaa44);
+    this.powerUpBar.fillRect(x, y, barW * ratio, barH);
+    // Border
+    this.powerUpBar.lineStyle(1, 0x44eeff);
+    this.powerUpBar.strokeRect(x, y, barW, barH);
   }
 
   /* ---- Collision callbacks ---- */
@@ -448,22 +591,27 @@ export class GameScene extends Phaser.Scene {
       .setDepth(200);
 
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 70, 'Press R or tap to restart', {
-        fontSize: '18px',
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 70, 'R / tap to restart  •  Q for ship select', {
+        fontSize: '16px',
         color: '#aaaaaa',
         fontFamily: 'monospace',
       })
       .setOrigin(0.5)
       .setDepth(200);
 
-    // Restart on R key (once to avoid stacking listeners across restarts)
+    // Restart on R key — replay with same ship
     this.input.keyboard?.once('keydown-R', () => {
-      this.scene.restart();
+      this.scene.restart({ ship: this.selectedShip });
+    });
+
+    // Return to ship selection on Q key
+    this.input.keyboard?.once('keydown-Q', () => {
+      this.scene.start('StartScene');
     });
 
     // Restart on tap / click
     this.input.once('pointerdown', () => {
-      this.scene.restart();
+      this.scene.restart({ ship: this.selectedShip });
     });
   }
 }

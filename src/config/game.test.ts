@@ -13,6 +13,9 @@ import {
   OBSTACLE_COUNT,
   OBSTACLE_MIN_SIZE,
   OBSTACLE_MAX_SIZE,
+  POWERUP_SPAWN_TIME,
+  POWERUP_DURATION,
+  POWERUP_SPEED,
 } from './game';
 
 describe('Game constants', () => {
@@ -43,5 +46,19 @@ describe('Game constants', () => {
   it('obstacle sizes should be valid range', () => {
     expect(OBSTACLE_MIN_SIZE).toBeLessThan(OBSTACLE_MAX_SIZE);
     expect(OBSTACLE_COUNT).toBeGreaterThan(0);
+  });
+
+  it('power-up should spawn before the boss', () => {
+    expect(POWERUP_SPAWN_TIME).toBeLessThan(BOSS_SPAWN_TIME);
+    expect(POWERUP_SPAWN_TIME).toBe(20_000);
+  });
+
+  it('power-up duration should be positive', () => {
+    expect(POWERUP_DURATION).toBeGreaterThan(0);
+    expect(POWERUP_DURATION).toBe(10_000);
+  });
+
+  it('power-up speed should be positive', () => {
+    expect(POWERUP_SPEED).toBeGreaterThan(0);
   });
 });

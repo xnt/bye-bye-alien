@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { SHIPS } from '../config/ships';
+import { SHIPS, POWERUP_STATS } from '../config/ships';
 
 /* ---------- Phaser mock ---------- */
 
@@ -23,6 +23,7 @@ const { MockSprite } = vi.hoisted(() => {
     setScale() { return this; }
     setAngle() { return this; }
     setCollideWorldBounds() { return this; }
+    setTexture() { return this; }
     setTint() { return this; }
     clearTint() { return this; }
     setActive(v: boolean) { this.active = v; return this; }
@@ -119,8 +120,10 @@ describe('Player', () => {
       expect(helpers.scene.physics.add.existing).toHaveBeenCalledWith(player);
     });
 
-    it('should create a bullet pool group', () => {
-      expect(helpers.scene.physics.add.group).toHaveBeenCalled();
+    it('should create a bullet pool group with the ship bullet texture', () => {
+      expect(helpers.scene.physics.add.group).toHaveBeenCalledWith(
+        expect.objectContaining({ defaultKey: stats.bulletTextureKey }),
+      );
       expect(player.bullets).toBe(helpers.mockBulletGroup);
     });
 
@@ -289,6 +292,72 @@ describe('Player', () => {
       helpers.mockBulletGroup.get.mockReturnValue(null);
       helpers.cursors.space.isDown = true;
       expect(() => player.update(1000, 16)).not.toThrow();
+    });
+  });
+
+  /* ---- power-up ---- */
+
+  describe('activatePowerUp', () => {
+    it('should set poweredUp to true', () => {
+      player.activatePowerUp(POWERUP_STATS);
+      expect(player.poweredUp).toBe(true);
+    });
+
+    it('should swap stats to power-up stats', () => {
+      player.activatePowerUp(POWERUP_STATS);
+      expect(player.stats).toBe(POWERUP_STATS);
+    });
+
+    it('should set HP to power-up HP', () => {
+      player.takeDamage(50);
+      player.activatePowerUp(POWERUP_STATS);
+      expect(player.currentHp).toBe(POWERUP_STATS.hp);
+    });
+
+    it('should swap texture', () => {
+      const texSpy = vi.spyOn(player, 'setTexture' as any);
+      player.activatePowerUp(POWERUP_STATS);
+      expect(texSpy).toHaveBeenCalledWith(POWERUP_STATS.textureKey);
+    });
+
+    it('should create a new bullet pool with power-up bullet texture', () => {
+      player.activatePowerUp(POWERUP_STATS);
+      expect(helpers.scene.physics.add.group).toHaveBeenCalledWith(
+        expect.objectContaining({ defaultKey: POWERUP_STATS.bulletTextureKey }),
+      );
+    });
+  });
+
+  describe('deactivatePowerUp', () => {
+    beforeEach(() => {
+      player.activatePowerUp(POWERUP_STATS);
+    });
+
+    it('should set poweredUp to false', () => {
+      player.deactivatePowerUp();
+      expect(player.poweredUp).toBe(false);
+    });
+
+    it('should restore base stats', () => {
+      player.deactivatePowerUp();
+      expect(player.stats).toBe(stats);
+    });
+
+    it('should refresh HP to base max', () => {
+      player.takeDamage(100);
+      player.deactivatePowerUp();
+      expect(player.currentHp).toBe(stats.hp);
+    });
+
+    it('should restore texture', () => {
+      const texSpy = vi.spyOn(player, 'setTexture' as any);
+      player.deactivatePowerUp();
+      expect(texSpy).toHaveBeenCalledWith(stats.textureKey);
+    });
+
+    it('should restore original bullet pool', () => {
+      player.deactivatePowerUp();
+      expect(player.bullets).toBe(helpers.mockBulletGroup);
     });
   });
 });
