@@ -127,6 +127,3 @@ export const SHIPS: Record<ShipKey, ShipStats> = {
 2. Add `generateRaptor(scene)` and `generateBulletRaptor(scene)` functions in
    `src/utils/textures.ts`, and call them from `generateTextures()`.
 
-## License
-
-ISC
